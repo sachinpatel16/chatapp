@@ -54,11 +54,41 @@
             color: #007bff;
             text-decoration: none;
         }
+        .messages {
+            list-style-type: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .messages li {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .messages .success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .messages .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
     <div class="form-container">
         <h2>Register</h2>
+
+        <!-- Display messages -->
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
         <form method="post">
             {% csrf_token %}
             <input type="text" name="username" placeholder="Username" required>

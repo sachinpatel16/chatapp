@@ -10,12 +10,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from app.task import send_welcome_email
 from app.models import Message
 
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
+# def get_tokens_for_user(user):
+#     refresh = RefreshToken.for_user(user)
+#     return {
+#         'refresh': str(refresh),
+#         'access': str(refresh.access_token),
+#     }
 def is_admin(user):
     return user.is_superuser
 
@@ -42,7 +42,7 @@ def singup(request):
             user.save()
             
             # Generate JWT tokens
-            tokens = get_tokens_for_user(user)
+            # tokens = get_tokens_for_user(user)
             
             # Automatically log in the user after successful registration
             login(request, user)
@@ -64,7 +64,12 @@ def singin(request):
             login(request, user)
             return redirect('chat', room_name='general') # Redirect to chat app URL
 
-        messages.error(request, "Invalid username or password.")
+        # Add specific messages for invalid username or password
+        if not username or not password:
+            messages.error(request, "Username and password cannot be empty.")
+        else:
+            messages.error(request, "Invalid username or password.")
+
         return render(request, 'login.html')
 
     return render(request, 'login.html')
