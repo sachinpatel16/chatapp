@@ -57,9 +57,8 @@ The application demonstrates the integration of robust system design for real-ti
 
 ### Prerequisites
 1. Python 3.8+
-2. Node.js (if using a React.js frontend)
-3. Redis for Celery
-4. Sqllite3 database
+2. Redis for Celery
+3. Sqllite3 database
 
 ### Steps
 1. Clone the repository:
