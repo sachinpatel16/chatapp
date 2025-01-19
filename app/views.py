@@ -23,6 +23,10 @@ def home(request):
     return render(request, 'home.html')
 
 def singup(request):
+    if request.user.is_authenticated:
+        # Redirect logged-in users to the chat room
+        return redirect('chat', room_name='general')
+    
     if request.method == 'POST':
             username = request.POST.get('username')
             email = request.POST.get('email')
@@ -55,6 +59,9 @@ def singup(request):
     return render(request, 'reg.html')
 
 def singin(request):
+    if request.user.is_authenticated:
+        # Redirect logged-in users to the chat room
+        return redirect('chat', room_name='general') 
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')

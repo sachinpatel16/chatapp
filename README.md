@@ -46,7 +46,7 @@ The application demonstrates the integration of robust system design for real-ti
 ## Technologies Used
 - **Backend**: Django, Django Channels
 - **Frontend**: HTML,CSS,JS
-- **Authentication**: Django Authentication, JWT
+- **Authentication**: Django Authentication, CSRF token
 - **WebSocket**: Django Channels
 - **Asynchronous Task Processing**: Celery with Redis
 - **Database**: Sqllite3
