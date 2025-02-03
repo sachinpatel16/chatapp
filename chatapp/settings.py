@@ -15,7 +15,8 @@ SECRET_KEY = "django-insecure-1ojl!8i(@$)r1)v-*8^h!3@b8d1!qg0b1!!qe#l1#dlztgz_-1
 DEBUG = False
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['chatapp.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '127.0.0.1']
+
 
 
 # Application definition

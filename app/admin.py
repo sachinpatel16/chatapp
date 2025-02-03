@@ -3,15 +3,16 @@ from django.contrib.admin.models import LogEntry
 from django.utils.translation import gettext_lazy as _
 
 
-from app.models import Message
+from app.models import Message, ChatRoom
 
-class MessageAdmin(admin.ModelAdmin):
-    list_display = ('user', 'room_name', 'content', 'created_at', 'deleted')
-    search_fields = ('user__username', 'room_name', 'content')  # Add search functionality
-    list_filter = ('room_name', 'deleted', 'created_at')  # Filter messages by room, deletion status, or date
+# class MessageAdmin(admin.ModelAdmin):
+#     list_display = ('user', 'room_name', 'content', 'created_at', 'deleted')
+#     search_fields = ('user__username', 'room_name', 'content')  # Add search functionality
+#     list_filter = ('room_name', 'deleted', 'created_at')  # Filter messages by room, deletion status, or date
 
 # Register the model with the MessageAdmin class
-admin.site.register(Message, MessageAdmin)
+admin.site.register(Message)
+admin.site.register(ChatRoom)
 
 class LogEntryAdmin(admin.ModelAdmin):
     list_display = ('user', 'content_type', 'object_id', 'object_repr', 'action_time', 'change_message')

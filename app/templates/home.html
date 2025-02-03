@@ -17,7 +17,6 @@
             align-items: center;
             height: 100vh;
         }
-
         .container {
             text-align: center;
             background: #fff;
@@ -62,15 +61,42 @@
 </head>
 <body>
     <div class="container">
+        {% if user.is_superuser %}
+        <a href="{% url 'admin:index' %}" class="dashboard-button">Go to Dashboard</a>
+        {% endif %}
         <h1>Welcome to Chat World!</h1>
-        
+        {% if request.user.is_authenticated %}
+        <p>Hello, {{ request.user.username }}!</p>
+        {% endif %}
+        {% for room in rooms %}
+        {% if request.user.is_superuser or request.user in room.members.all %}
+            <p>{{ room.name }} 
+                <a href="{% url 'chat' room_name=room.name %}">Join</a> 
+                {% comment %} {% if user.is_superuser %}
+                | 
+                <a href="{% url 'assign_user' room_id=room.id %}">Assign Random User</a>
+                {% endif %} {% endcomment %}
+            </p>
+        {% endif %}
+    {% endfor %}
+    
+    
+        {% if user.is_superuser %}
+        <h2>Create Group</h2>
+        <form method="post" action="{% url 'create_group' %}">
+            {% csrf_token %}
+            <input type="text" name="group_name" placeholder="Group Name" required>
+            <button type="submit">Create</button>
+        </form>
+        {% endif %}
+
         {% if not request.user.is_authenticated %}
-        <h3><a href="{% url 'chat' room_name='general' %}">Go to Chat</a></h3>
+        {% comment %} <h3><a href="{% url 'chat' room_name='general' %}">Go to Chat</a></h3> {% endcomment %}
         <h3><a href="{% url 'reg' %}">Sign Up</a></h3>
         <h3><a href="{% url 'login' %}">Sign In</a></h3>
         {% else %}
             <h3>Welcome, {{ request.user.username }}!</h3>
-            <h3><a href="{% url 'chat' room_name='general' %}">Go to Chat</a></h3>
+            {% comment %} <h3><a href="{% url 'chat' room_name='general' %}">Go to Chat</a></h3> {% endcomment %}
             <h3><a href="{% url 'logout' %}">Log Out</a></h3>
         {% endif %}
         <div class="footer">

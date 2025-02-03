@@ -16,7 +16,7 @@
             align-items: center;
             height: 100vh;
         }
-        
+
         /* Chat Container */
         .chat-container {
             width: 400px;
@@ -29,7 +29,7 @@
             padding: 10px;
             border: 1px solid #ddd;
         }
-        
+
         /* Chat Header */
         .chat-header {
             background: #007bff;
@@ -39,7 +39,7 @@
             font-size: 20px;
             font-weight: bold;
         }
-        
+
         /* Chat Messages */
         .chat-messages {
             flex: 1;
@@ -49,7 +49,7 @@
             max-height: 400px;
             margin-bottom: 10px;
         }
-        
+
         .message {
             padding: 10px 15px;
             margin-bottom: 10px;
@@ -57,30 +57,25 @@
             border-radius: 10px;
             max-width: 70%;
         }
-        
+
         .message .username {
             font-weight: bold;
             color: #007bff;
         }
-        
-        .message a {
-            font-size: 14px;
-            color: #007bff;
-            text-decoration: none;
-            margin-left: 10px;
+
+        .own-message {
+            background: #d1e7fd;
+            align-self: flex-end;
+            text-align: right;
         }
-        
-        .message a:hover {
-            text-decoration: underline;
-        }
-        
+
         /* Message Input Form */
         .chat-form {
             display: flex;
             padding: 16px;
             border-top: 1px solid #ddd;
         }
-        
+
         .chat-form input {
             flex: 1;
             padding: 10px;
@@ -89,7 +84,7 @@
             font-size: 16px;
             margin-right: 8px;
         }
-        
+
         .chat-form button {
             background: #007bff;
             color: white;
@@ -100,52 +95,25 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        
+
         .chat-form button:hover {
             background: #0056b3;
         }
-        
-        /* Admin Links */
-        .chat-header a {
-            font-size: 14px;
-            color: #fff;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-        
-        .chat-header a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Custom Style for Logged-in User's Greeting */
-        p {
-            font-size: 18px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        
+
         /* Logout Button */
-        a {
+        .logout {
             color: #007bff;
             text-decoration: none;
             font-size: 16px;
-            display: inline-block;
-            margin-bottom: 10px;
             text-align: center;
+            display: block;
+            margin-bottom: 10px;
         }
-        
-        a:hover {
+
+        .logout:hover {
             text-decoration: underline;
         }
-        
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-left: 8px;
-        }
-        
+
         .dashboard-button {
             background: #28a745;
             color: white;
@@ -161,27 +129,60 @@
         .dashboard-button:hover {
             background: #218838;
         }
-        
+
+        /* Suggestions styling */
+        .suggestions-container {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-pill {
+            background: #e3f2fd;
+            border-radius: 15px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .suggestion-pill:hover {
+            background: #bbdefb;
+        }
     </style>
 </head>
 <body>
-
     <div class="chat-container">
-        <p>Hello, {{ request.user.username }}!</p>
+        <button style="margin-bottom: 10px;"><a href="{% url 'home' %}">🏠 Back to Home</a></button>
 
-        <a href="{% url 'logout' %}">Logout</a>
+        <p>Hello, {{ request.user.username }}!</p>
+        
+        <a href="{% url 'logout' %}" class="logout">Logout</a>
         
         {% if user.is_superuser %}
             <a href="{% url 'admin:index' %}" class="dashboard-button">Go to Dashboard</a>
         {% endif %}
-        
+
         <div class="chat-header">
-            <h2>Chat Room - {{ room_name }}</h2>
+            <h2>
+                {% if room.is_group %}
+                    Group Chat - {{ room.name }}
+                {% else %}
+                    Private Chat with 
+                    {% for member in room.members.all %}
+                        {% if member != request.user %}
+                            {{ member.username }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </h2>
         </div>
+
         <div id="chat-messages" class="chat-messages">
             {% for message in messages %}
-                <div class="message">
-                    <span class="username">{{ message.user.username }}:</span> {{ message.content }}
+                <div class="message {% if message.sender == request.user %}own-message{% endif %}">
+                    <span class="username">{{ message.sender.username }}:</span> {{ message.content }}
                     {% if user.is_superuser %}
                         <a href="{% url 'edit_message' message.id %}">Edit</a> |
                         <a href="{% url 'delete_message' message.id %}">Delete</a>
@@ -189,36 +190,73 @@
                 </div>
             {% endfor %}
         </div>
+
         <form id="chat-form" class="chat-form">
             <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required />
             <button type="submit">Send</button>
         </form>
     </div>
+
     <script>
         // JavaScript for WebSocket Communication
-        const roomName = '{{ room_name }}';  // Get room name from the context passed to the template
-        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
-    
+        const roomId = '{{ room.id }}';  // Pass room id to JavaScript
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomId}/`);
+
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
+            
+            if (data.type === 'suggestions') {
+                showSuggestions(data.suggestions);
+            } else if (data.type === 'chat_message') {
+                displayMessage(data.username, data.message);
+            }
+        };
+
+        function displayMessage(username, message) {
             const chatMessages = document.getElementById('chat-messages');
             const newMessage = document.createElement('div');
-            newMessage.className = 'message';
-            newMessage.innerHTML = `<span class="username">${data.username}:</span> ${data.message}`;
+            newMessage.className = `message ${username === '{{ request.user.username }}' ? 'own-message' : ''}`;
+            newMessage.innerHTML = `<span class="username">${username}:</span> ${message}`;
             chatMessages.appendChild(newMessage);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        };
-    
+        }
+
+        function showSuggestions(suggestions) {
+            // Remove existing suggestions first
+            document.querySelectorAll('.suggestions-container').forEach(element => element.remove());
+            
+            const container = document.createElement('div');
+            container.className = 'suggestions-container';
+            
+            suggestions.forEach(suggestion => {
+                const pill = document.createElement('div');
+                pill.className = 'suggestion-pill';
+                pill.textContent = suggestion;
+                pill.onclick = () => {
+                    document.getElementById('message-input').value = suggestion;
+                    document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+                };
+                container.appendChild(pill);
+            });
+            
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.appendChild(container);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
         };
-    
+
         document.getElementById('chat-form').onsubmit = function(e) {
             e.preventDefault();
             const messageInput = document.getElementById('message-input');
-            const message = messageInput.value;
-            chatSocket.send(JSON.stringify({ message }));
-            messageInput.value = '';
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                chatSocket.send(JSON.stringify({ message }));
+                messageInput.value = '';
+            }
         };
     </script>
 </body>
